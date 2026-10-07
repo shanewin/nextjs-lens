@@ -78,7 +78,13 @@ This project was previously called codebase-lens. Existing `.codebase-lens.json`
 
 ### 2. Use it
 
-Open Claude Code in your project. The tools are available automatically. Try:
+Open Claude Code in your project. Models often read files by hand unless told to use the tools, so mention nextjs-lens in your request ("use nextjs-lens to…"), or add a line like this to your project's `CLAUDE.md`:
+
+```
+For Next.js routes, auth, and client/server questions, use the nextjs-lens tools.
+```
+
+Then try:
 
 - "Show me the route tree with which layouts and error boundaries apply to each page"
 - "Where does 'use client' pull server code into the client bundle?"

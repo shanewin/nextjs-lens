@@ -228,7 +228,7 @@ export function registerDataFetchingTools(tools: ToolCollector, root: string, ap
     description:
       'Per-route rendering and caching analysis from the AST. For every App Router page, layout, and route handler: route segment config, ' +
       'fetch() calls with their cache / next.revalidate / next.tags options, \'use cache\' (file or function level), cacheLife/cacheTag, ' +
-      'unstable_cache, React cache(), and dynamic API usage (cookies, headers, draftMode, connection, searchParams) — with an inferred ' +
+      'unstable_cache, React cache(), and dynamic API usage (cookies, headers, draftMode, connection, searchParams), with an inferred ' +
       `rendering mode. Follows the functions each route actually calls into imported helpers, up to ${MAX_IMPORT_DEPTH} modules deep ` +
       '(through re-exports, stopping at \'use client\' and \'use server\' modules). Dynamic APIs reached through those calls are definite ' +
       '(dynamic_apis); ones in helpers the route only imports are possible (possible_dynamic_apis) and never raise severity. ' +
@@ -370,15 +370,15 @@ export function registerDataFetchingTools(tools: ToolCollector, root: string, ap
       for (const r of results) {
         const mode = r.segment_config.dynamic
         if (mode === 'force-static' && r.dynamic_apis.length) {
-          findings.push({ severity: 'medium', detail: `dynamic = 'force-static' but uses ${r.dynamic_apis.join(', ')} — these return empty values at build time`, file: r.file, route: r.path })
+          findings.push({ severity: 'medium', detail: `dynamic = 'force-static' but uses ${r.dynamic_apis.join(', ')}: these return empty values at build time`, file: r.file, route: r.path })
         }
         if (mode === 'error' && r.dynamic_apis.length) {
-          findings.push({ severity: 'high', detail: `dynamic = 'error' with ${r.dynamic_apis.join(', ')} — the build will fail`, file: r.file, route: r.path })
+          findings.push({ severity: 'high', detail: `dynamic = 'error' with ${r.dynamic_apis.join(', ')}: the build will fail`, file: r.file, route: r.path })
         }
         if ((mode === 'force-static' || mode === 'error') && r.possible_dynamic_apis.length) {
           findings.push({
             severity: 'info',
-            detail: `dynamic = '${mode}' and imports helpers that use ${r.possible_dynamic_apis.join(', ')} without calling them here — ` +
+            detail: `dynamic = '${mode}' and imports helpers that use ${r.possible_dynamic_apis.join(', ')} without calling them here: ` +
               `if they run during render they ${mode === 'error' ? 'fail the build' : 'return empty values at build time'}`,
             file: r.file,
             route: r.path,
@@ -406,7 +406,7 @@ export function registerDataFetchingTools(tools: ToolCollector, root: string, ap
             if (ts.isCallExpression(n) && ts.isIdentifier(n.expression) && locals.has(n.expression.text) && n.arguments.length === 1) {
               findings.push({
                 severity: 'low',
-                detail: `${n.getText(sf).slice(0, 80)} uses the deprecated single-argument form — on Next.js 16 it expires the tag immediately (like { expire: 0 }) and is a TypeScript error; pass a cacheLife profile such as 'max', or use updateTag in a Server Action`,
+                detail: `${n.getText(sf).slice(0, 80)} uses the deprecated single-argument form: on Next.js 16 it expires the tag immediately (like { expire: 0 }) and is a TypeScript error; pass a cacheLife profile such as 'max', or use updateTag in a Server Action`,
                 file: `${relative(root, file)}:${lineOf(sf, n)}`,
               })
             }

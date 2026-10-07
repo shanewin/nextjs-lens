@@ -408,7 +408,7 @@ function resolveWorkspacePackage(workspace: Workspace, specifier: string): strin
   }
   for (const c of candidates) {
     const abs = resolve(pkg.dir, c)
-    // Built entry points (dist/*.js) usually don't exist in a fresh clone — fall back to the source file
+    // Built entry points (dist/*.js) usually don't exist in a fresh clone: fall back to the source file
     const hit = tryFile(abs) ?? tryFile(abs.replace(/\/dist\//, '/src/').replace(/(\.d)?\.(c|m)?[jt]s$/, ''))
     if (hit && !hit.endsWith('.d.ts')) return hit
   }

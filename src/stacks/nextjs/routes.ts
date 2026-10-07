@@ -189,14 +189,14 @@ export function auditAppTree(root: string, tree: SegmentNode, routes: ResolvedRo
   const visit = (node: SegmentNode, hasLayoutAbove: boolean): void => {
     const f = node.files
     if (f.page && f.route && node.kind !== 'parallel') {
-      findings.push({ severity: 'high', detail: `page and route handler in the same segment "${node.path}" — Next.js rejects this at build time`, file: rel(f.route), route: node.path })
+      findings.push({ severity: 'high', detail: `page and route handler in the same segment "${node.path}": Next.js rejects this at build time`, file: rel(f.route), route: node.path })
     }
     for (const boundary of ['error', 'global-error'] as const) {
       const file = f[boundary]
       if (!file) continue
       const sf = parseFile(file)
       if (sf && fileDirective(sf) !== 'use client') {
-        findings.push({ severity: 'high', detail: `${boundary} boundary must be a Client Component — add 'use client'`, file: rel(file), route: node.path })
+        findings.push({ severity: 'high', detail: `${boundary} boundary must be a Client Component: add 'use client'`, file: rel(file), route: node.path })
       }
     }
     for (const entry of ['page', 'layout'] as const) {
@@ -206,7 +206,7 @@ export function auditAppTree(root: string, tree: SegmentNode, routes: ResolvedRo
       if (!sf || fileDirective(sf) !== 'use client') continue
       const serverOnly = getExports(sf).map(e => e.name).filter(n => ['metadata', 'generateMetadata', 'generateStaticParams', 'viewport', 'generateViewport'].includes(n))
       if (serverOnly.length) {
-        findings.push({ severity: 'high', detail: `'use client' ${entry} exports ${serverOnly.join(', ')} — these are only allowed in Server Components and fail the build`, file: rel(file), route: node.path })
+        findings.push({ severity: 'high', detail: `'use client' ${entry} exports ${serverOnly.join(', ')}: these are only allowed in Server Components and fail the build`, file: rel(file), route: node.path })
       }
     }
     if (node.kind === 'parallel' && !f.default) {
@@ -214,13 +214,13 @@ export function auditAppTree(root: string, tree: SegmentNode, routes: ResolvedRo
       findings.push(nextMajor !== null && nextMajor >= 16
         ? {
           severity: 'high',
-          detail: `Parallel slot ${node.name} has no default.* — Next.js 16 fails the build without one; add a default.tsx that returns null or calls notFound()`,
+          detail: `Parallel slot ${node.name} has no default.*: Next.js 16 fails the build without one; add a default.tsx that returns null or calls notFound()`,
           file: rel(node.dir),
           route: node.path,
         }
         : {
           severity: 'medium',
-          detail: `Parallel slot ${node.name} has no default.* — hard navigation to sub-routes the slot doesn't match will 404, and Next.js 16 builds fail without it`,
+          detail: `Parallel slot ${node.name} has no default.*: hard navigation to sub-routes the slot doesn't match will 404, and Next.js 16 builds fail without it`,
           file: rel(node.dir),
           route: node.path,
         })
@@ -304,7 +304,7 @@ export function registerRouteTools(tools: ToolCollector, root: string, appDir: s
   tools.register({
     name: 'list_routes',
     description:
-      'Flat list of every route in the Next.js app — App Router pages and route handlers (with HTTP methods parsed from the AST, ' +
+      'Flat list of every route in the Next.js app: App Router pages and route handlers (with HTTP methods parsed from the AST, ' +
       'including `export const GET = ...` and `export { handler as POST }`), parallel-slot and intercepting pages, and Pages Router pages/API routes.',
     parameters: {
       type: 'object',
@@ -351,7 +351,7 @@ export function registerRouteTools(tools: ToolCollector, root: string, appDir: s
       required: [],
     },
     execute: async (args: { path?: string }) => {
-      if (!appDir) return { error: 'No app/ or src/app/ directory found — this tool covers the App Router only' }
+      if (!appDir) return { error: 'No app/ or src/app/ directory found: this tool covers the App Router only' }
       const tree = buildAppTree(appDir)
       const all = resolveAppRoutes(root, tree)
       const routes = args.path ? all.filter(r => r.path.startsWith(args.path!)) : all

@@ -197,7 +197,7 @@ export interface BoundaryAnalysis {
   envs: Map<string, Set<Env>>
   /** Client-environment import edges, reversed: file → files that import it in the client bundle */
   clientImporters: Map<string, Set<string>>
-  /** For each (file, env), the file that first pulled it in — for chain reconstruction */
+  /** For each (file, env), the file that first pulled it in (for chain reconstruction) */
   parents: Map<string, string | null>
   boundaries: { from: string; to: string; line: number }[]
   facts: Map<string, FileFacts>
@@ -340,7 +340,7 @@ export function registerBoundaryTools(tools: ToolCollector, root: string, appDir
       required: [],
     },
     execute: async (args: { file?: string }) => {
-      if (!appDir) return { error: 'No app/ or src/app/ directory found — boundaries only exist in the App Router' }
+      if (!appDir) return { error: 'No app/ or src/app/ directory found: boundaries only exist in the App Router' }
       const a = analyzeBoundaries(root, appDir)
       const rel = (f: string) => relative(root, f)
 
@@ -385,16 +385,16 @@ export function registerBoundaryTools(tools: ToolCollector, root: string, appDir
           }
           // Files shared with the server are skipped: reading server env there is valid, and Next.js never inlines it
           if (f.privateEnvVars.length && !set.has('server')) {
-            findings.push({ severity: 'low', detail: `Client-only file reads non-NEXT_PUBLIC_ env var(s) ${f.privateEnvVars.join(', ')} — always undefined in the browser`, file: rel(file), chain: chainTo(root, a, file, 'client') })
+            findings.push({ severity: 'low', detail: `Client-only file reads non-NEXT_PUBLIC_ env var(s) ${f.privateEnvVars.join(', ')}: always undefined in the browser`, file: rel(file), chain: chainTo(root, a, file, 'client') })
           }
         }
         if (set.has('server') && f.directive !== 'use client') {
           if (f.clientApis.length) {
-            findings.push({ severity: 'high', detail: `Uses ${f.clientApis.join(', ')} but renders as a Server Component — add 'use client' or move the hook into a client child`, file: rel(file), chain: chainTo(root, a, file, 'server') })
+            findings.push({ severity: 'high', detail: `Uses ${f.clientApis.join(', ')} but renders as a Server Component: add 'use client' or move the hook into a client child`, file: rel(file), chain: chainTo(root, a, file, 'server') })
           }
         }
         if (f.directive === 'use client' && /\/layout\.(t|j)sx?$/.test(file)) {
-          findings.push({ severity: 'medium', detail: `'use client' on a layout makes every nested page's shared UI client-rendered — push the directive down to the interactive leaf`, file: rel(file) })
+          findings.push({ severity: 'medium', detail: `'use client' on a layout makes every nested page's shared UI client-rendered: push the directive down to the interactive leaf`, file: rel(file) })
         }
       }
 
@@ -402,7 +402,7 @@ export function registerBoundaryTools(tools: ToolCollector, root: string, appDir
       for (const [file, set] of a.envs) {
         const f = a.facts.get(file)!
         if (f.browserGlobals.length) {
-          findings.push({ severity: 'high', detail: `References ${f.browserGlobals.join(', ')} at module scope — throws when the module is evaluated during server rendering`, file: rel(file), chain: chainTo(root, a, file, set.has('server') ? 'server' : 'client') })
+          findings.push({ severity: 'high', detail: `References ${f.browserGlobals.join(', ')} at module scope: throws when the module is evaluated during server rendering`, file: rel(file), chain: chainTo(root, a, file, set.has('server') ? 'server' : 'client') })
         }
       }
 

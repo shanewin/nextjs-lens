@@ -137,22 +137,22 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
       const findings: (Finding & { category: string })[] = []
       const add = (severity: Finding['severity'], category: string, detail: string) => findings.push({ severity, category, detail, file: name })
 
-      if (get(config, 'poweredByHeader') !== false) add('low', 'security', 'poweredByHeader is not false — responses advertise X-Powered-By: Next.js')
+      if (get(config, 'poweredByHeader') !== false) add('low', 'security', 'poweredByHeader is not false; responses advertise X-Powered-By: Next.js')
       if (get(config, 'reactStrictMode') === false) add('low', 'best-practice', 'reactStrictMode explicitly disabled')
 
       const env = get(config, 'env')
       if (env && typeof env === 'object' && !Array.isArray(env)) {
         const secretish = Object.keys(env).filter(k => /SECRET|PRIVATE|PASSWORD|TOKEN|SERVICE_ROLE|API_KEY/i.test(k))
-        if (secretish.length) add('high', 'security', `env inlines ${secretish.join(', ')} into the JS bundle at build time — these reach the browser if referenced client-side`)
+        if (secretish.length) add('high', 'security', `env inlines ${secretish.join(', ')} into the JS bundle at build time: these reach the browser if referenced client-side`)
       }
 
       const patterns = get(config, 'images.remotePatterns')
       if (Array.isArray(patterns) && patterns.some(p => typeof p === 'object' && p && !Array.isArray(p) && (get(p, 'hostname') === '**' || get(p, 'hostname') === '*'))) {
-        add('medium', 'security', 'images.remotePatterns allows any hostname — the image optimizer can be used as an open proxy')
+        add('medium', 'security', 'images.remotePatterns allows any hostname: the image optimizer can be used as an open proxy')
       }
-      if (Array.isArray(get(config, 'images.domains'))) add('low', 'deprecation', 'images.domains is deprecated — use images.remotePatterns')
+      if (Array.isArray(get(config, 'images.domains'))) add('low', 'deprecation', 'images.domains is deprecated: use images.remotePatterns')
       if (get(config, 'images.dangerouslyAllowSVG') === true && get(config, 'images.contentSecurityPolicy') === undefined) {
-        add('medium', 'security', 'images.dangerouslyAllowSVG without images.contentSecurityPolicy — SVGs can carry scripts')
+        add('medium', 'security', 'images.dangerouslyAllowSVG without images.contentSecurityPolicy: SVGs can carry scripts')
       }
       if (get(config, 'typescript.ignoreBuildErrors') === true) add('medium', 'reliability', 'typescript.ignoreBuildErrors ships code that fails type checking')
       if (get(config, 'eslint.ignoreDuringBuilds') === true) add('low', 'reliability', 'eslint.ignoreDuringBuilds is enabled')
@@ -161,7 +161,7 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
       for (const path of ['experimental.serverActions.allowedOrigins', 'serverActions.allowedOrigins']) {
         const origins = get(config, path)
         if (Array.isArray(origins) && origins.some(o => o === '*' || (typeof o === 'string' && o.startsWith('*')))) {
-          add('medium', 'security', `${path} contains a wildcard — weakens the Origin/Host CSRF check for server actions`)
+          add('medium', 'security', `${path} contains a wildcard: weakens the Origin/Host CSRF check for server actions`)
         }
       }
 
@@ -186,7 +186,7 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
         securityHeaders[h] = headerSources.find(src => src.text.includes(h))?.file ?? null
         if (!securityHeaders[h]) {
           add('info', 'security', `${h} not found in next.config headers(), ${mw?.file ?? 'middleware/proxy'}, or the modules they import` +
-            (h === 'Strict-Transport-Security' ? ' — Vercel and many hosts add HSTS automatically' : ''))
+            (h === 'Strict-Transport-Security' ? ' (Vercel and many hosts add HSTS automatically)' : ''))
         }
       }
 
@@ -206,7 +206,7 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
     name: 'analyze_middleware',
     description:
       'Analyze middleware.ts / proxy.ts via the AST: parsed matcher config (string, array, or { source } objects), auth logic, ' +
-      'redirect/rewrite usage, and — by evaluating each matcher against the real App Router route list — exactly which pages and ' +
+      'redirect/rewrite usage, and, by evaluating each matcher against the real App Router route list, exactly which pages and ' +
       'route handlers the middleware runs on and which it skips. On Next.js 16, gives middleware-to-proxy migration advice that accounts for the Edge runtime.',
     parameters: {
       type: 'object',
@@ -235,22 +235,22 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
       const skipped = routes.filter(r => !covered.includes(r))
 
       const findings: Finding[] = []
-      if (mw.matchers === null) findings.push({ severity: 'low', detail: 'No matcher — runs on every request including static assets and images', file: mw.file })
+      if (mw.matchers === null) findings.push({ severity: 'low', detail: 'No matcher: runs on every request including static assets and images', file: mw.file })
       if (!mw.hasAuthLogic) findings.push({ severity: 'info', detail: `No recognizable auth logic in ${mw.kind}`, file: mw.file })
       // Next.js 16: middleware is deprecated in favor of proxy, but proxy only runs on Node.js and rejects a runtime option.
       // Middleware without runtime: 'nodejs' runs on the Edge runtime, so renaming it changes where it runs.
       if (major !== null && major >= 16) {
         const onEdge = mw.runtime === null || /edge/.test(mw.runtime)
         if (mw.kind === 'middleware' && !onEdge) {
-          findings.push({ severity: 'low', detail: 'Next.js 16 renamed middleware to proxy — rename the file to proxy.ts, the export to proxy, and remove the runtime option (proxy always runs on Node.js and rejects it)', file: mw.file })
+          findings.push({ severity: 'low', detail: 'Next.js 16 renamed middleware to proxy: rename the file to proxy.ts, the export to proxy, and remove the runtime option (proxy always runs on Node.js and rejects it)', file: mw.file })
         } else if (mw.kind === 'middleware') {
           findings.push({
             severity: 'info',
-            detail: `middleware is deprecated in Next.js 16, but this file runs on the Edge runtime (${mw.runtime ? `runtime: '${mw.runtime}'` : 'the middleware default'}) and proxy only supports Node.js — rename to proxy.ts only if Node.js is acceptable, otherwise keep middleware for now`,
+            detail: `middleware is deprecated in Next.js 16, but this file runs on the Edge runtime (${mw.runtime ? `runtime: '${mw.runtime}'` : 'the middleware default'}) and proxy only supports Node.js: rename to proxy.ts only if Node.js is acceptable, otherwise keep middleware for now`,
             file: mw.file,
           })
         } else if (mw.runtime !== null) {
-          findings.push({ severity: 'high', detail: `proxy files can't set a runtime — Next.js throws on runtime: '${mw.runtime}'; remove it (proxy always runs on Node.js)`, file: mw.file })
+          findings.push({ severity: 'high', detail: `proxy files can't set a runtime: Next.js throws on runtime: '${mw.runtime}'; remove it (proxy always runs on Node.js)`, file: mw.file })
         }
       }
       const skippedRoutes = skipped.filter(r => r.type === 'route')
@@ -327,7 +327,7 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
           findings.push({
             severity: 'high',
             detail: f.template
-              ? `Template defines secret-looking public vars ${f.suspicious.join(', ')} — any deployment that fills them in ships them to the browser`
+              ? `Template defines secret-looking public vars ${f.suspicious.join(', ')}: any deployment that fills them in ships them to the browser`
               : `Secret-looking public vars are shipped to the browser: ${f.suspicious.join(', ')}`,
             file: f.file,
           })
@@ -344,7 +344,7 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
               file: f.file,
             })
           } else {
-            findings.push({ severity: 'low', detail: `${f.file} is not covered by .gitignore — fine for non-secret defaults, but keep secrets in .env*.local`, file: f.file })
+            findings.push({ severity: 'low', detail: `${f.file} is not covered by .gitignore: fine for non-secret defaults, but keep secrets in .env*.local`, file: f.file })
           }
         }
       }
@@ -365,7 +365,7 @@ export function registerNextjsTools(tools: ToolCollector, appRoot: string): void
       const note = envFiles.length === 0
         ? `No .env files or templates found in ${dirs.map(d => relative(root, d) || '.').join(' or ')}`
         : envFiles.every(f => f.template)
-          ? 'Only env templates found — real values are likely supplied by the host; results are based on the templates'
+          ? 'Only env templates found: real values are likely supplied by the host; results are based on the templates'
           : undefined
       return { env_files: envFiles, ...(note ? { note } : {}), findings }
     },

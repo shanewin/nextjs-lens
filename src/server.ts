@@ -187,7 +187,7 @@ server.resource(
     contents: [{
       uri: uri.href,
       mimeType: 'text/markdown',
-      text: `# nextjs-lens Status\n\nProject: ${root}\n\n${detectionSummary}\n\nTools loaded: ${tools.length}\n\nRules: ${describeRules(loadedRules)}\n\n## Available Tools\n${tools.map(t => `- **${t.name}** — ${t.description.split('.')[0]}`).join('\n')}\n`,
+      text: `# nextjs-lens Status\n\nProject: ${root}\n\n${detectionSummary}\n\nTools loaded: ${tools.length}\n\nRules: ${describeRules(loadedRules)}\n\n## Available Tools\n${tools.map(t => `- **${t.name}**: ${t.description.split('.')[0]}`).join('\n')}\n`,
     }],
   }),
 )
@@ -196,8 +196,8 @@ server.resource(
 // Register knowledge files as MCP resources
 // ---------------------------------------------------------------------------
 // Knowledge files live in knowledge/nextjs/ and come in two flavors:
-//   - docs/*.md    — official docs pages, one per file plus docs/index.md (run npm run fetch-docs)
-//   - community.md — human-maintained best practices and gotchas
+//   - docs/*.md: official docs pages, one per file plus docs/index.md (run npm run fetch-docs)
+//   - community.md: human-maintained best practices and gotchas
 
 const knowledgeDir = join(import.meta.dirname, '..', 'knowledge', 'nextjs')
 const knowledgeFiles = existsSync(knowledgeDir)

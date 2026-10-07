@@ -83,7 +83,7 @@ export function registerUnusedTools(tools: ToolCollector, root: string, appDir: 
           if (e.kind === 'star') {
             if (name === '*' || !exps.some(x => x.name === name && x.kind !== 'star')) markUsed(target, name, seen)
           } else if (name === '*' || e.name === name) {
-            // `export { a as b } from` — find the original name from the import side of the declaration
+            // `export { a as b } from`: find the original name from the import side of the declaration
             const orig = graph.importsOf(file).find(i => i.specifier === e.from && i.line === e.line)?.names
             const origName = orig && orig.length === 1 ? orig[0] : e.name
             markUsed(target, name === '*' ? '*' : origName, seen)

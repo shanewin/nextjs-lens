@@ -7,9 +7,9 @@ export interface NextAppCandidate {
   path: string
   /** Path relative to the monorepo root */
   relPath: string
-  /** Number of App Router page/route files plus Pages Router files — used to pick the main app */
+  /** Number of App Router page/route files plus Pages Router files: used to pick the main app */
   routeFiles: number
-  /** Total source files — breaks ties between apps with the same route count */
+  /** Total source files: breaks ties between apps with the same route count */
   sourceFiles: number
 }
 

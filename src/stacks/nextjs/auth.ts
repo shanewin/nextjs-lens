@@ -211,8 +211,8 @@ function publicByDesign(path: string): string | null {
 }
 
 /**
- * Auth evidence for one exported route handler. When the handler lives in another module — a re-export
- * (`export { default } from 'pkg/webhook'`) or an imported function passed to a wrapper — follow it there.
+ * Auth evidence for one exported route handler. When the handler lives in another module (a re-export
+ * (`export { default } from 'pkg/webhook'`) or an imported function passed to a wrapper), follow it there.
  */
 function handlerSignals(root: string, file: string, sf: ts.SourceFile, exp: ExportInfo, authCalls: Set<string>, resolver: Resolver, depth = 0): AuthSignal[] {
   const signals: AuthSignal[] = []
@@ -437,7 +437,7 @@ export function registerAuthTools(tools: ToolCollector, root: string, appDir: st
   tools.register({
     name: 'audit_route_auth',
     description:
-      'Auth coverage audit for every API endpoint — App Router route handlers (per exported HTTP method, including `export const POST = withAuth(...)` ' +
+      'Auth coverage audit for every API endpoint: App Router route handlers (per exported HTTP method, including `export const POST = withAuth(...)` ' +
       'and `export { handler as GET }`) and Pages Router API routes. Inspects each handler body with the TypeScript AST for auth calls ' +
       '(auth(), getServerSession, currentUser, supabase.auth.getUser, …), auth wrappers, Authorization/API-key header checks, and webhook signature ' +
       'verification, following calls into same-file helpers. Cross-references the middleware/proxy matcher to show which endpoints are only protected ' +
@@ -498,14 +498,14 @@ export function registerAuthTools(tools: ToolCollector, root: string, appDir: st
           findings.push({
             severity: e.likely_public ? 'info' : mutation ? 'high' : 'low',
             detail: `${e.method} ${e.path} has no auth check in the handler and is not covered by ${mw ? `${mw.kind} matcher` : 'any middleware/proxy'}` +
-              (e.likely_public ? ` — likely public by design (${e.likely_public}); confirm it exposes nothing sensitive` : ''),
+              (e.likely_public ? `; likely public by design (${e.likely_public}), so confirm it exposes nothing sensitive` : ''),
             file: `${e.file}:${e.line}`,
             route: e.path,
           })
         } else if (e.status === 'middleware-only' && mutation) {
           findings.push({
             severity: 'medium',
-            detail: `${e.method} ${e.path} relies solely on ${mw!.kind} for auth — a matcher change or CVE-2025-29927-style bypass leaves it open; check auth in the handler too`,
+            detail: `${e.method} ${e.path} relies solely on ${mw!.kind} for auth: a matcher change or CVE-2025-29927-style bypass leaves it open; check auth in the handler too`,
             file: `${e.file}:${e.line}`,
             route: e.path,
           })
@@ -530,7 +530,7 @@ export function registerAuthTools(tools: ToolCollector, root: string, appDir: st
   tools.register({
     name: 'find_server_actions',
     description:
-      'Find every Server Action via the AST — exports of \'use server\' modules (functions, arrow consts, `export { x }`) and inline functions with a ' +
+      'Find every Server Action via the AST: exports of \'use server\' modules (functions, arrow consts, `export { x }`) and inline functions with a ' +
       '\'use server\' body directive. For each action: auth checks in the body (following same-file helpers), input validation ' +
       '(zod/valibot/yup parse), and which client/server files import it. Actions are public POST endpoints, so missing auth is flagged per action.',
     parameters: {
@@ -609,15 +609,15 @@ export function registerAuthTools(tools: ToolCollector, root: string, appDir: st
       const unauthenticated = (a: (typeof actions)[number]): Finding => {
         const file = `${a.file}:${a.line}`
         if (a.destructive) {
-          return { severity: 'critical', detail: `Server action ${a.name} destroys data (${a.destructive}) with no auth check — anyone can call it via POST with its action ID`, file }
+          return { severity: 'critical', detail: `Server action ${a.name} destroys data (${a.destructive}) with no auth check: anyone can call it via POST with its action ID`, file }
         }
         if (a.data_export) {
-          return { severity: 'high', detail: `Server action ${a.name} exports data (${a.data_export}) with no auth check — anyone can call it via POST and receive the result`, file }
+          return { severity: 'high', detail: `Server action ${a.name} exports data (${a.data_export}) with no auth check: anyone can call it via POST and receive the result`, file }
         }
         if (a.cache_only) {
-          return { severity: 'low', detail: `Server action ${a.name} has no auth check, but it only revalidates cached data — an anonymous caller can at most force a cache refresh`, file }
+          return { severity: 'low', detail: `Server action ${a.name} has no auth check, but it only revalidates cached data: an anonymous caller can at most force a cache refresh`, file }
         }
-        return { severity: 'medium', detail: `Server action ${a.name} has no auth check — it is callable by anyone via POST with its action ID`, file }
+        return { severity: 'medium', detail: `Server action ${a.name} has no auth check: it is callable by anyone via POST with its action ID`, file }
       }
       const findings: Finding[] = actions.filter(a => a.auth.length === 0).map(unauthenticated)
       for (const a of actions.filter(a => !a.validates_input && !a.cache_only)) {
