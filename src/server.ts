@@ -9,6 +9,7 @@ import { join, resolve, relative } from 'node:path'
 import type { ToolRegistration, PropertySchema, ToolCollector } from './core/types.js'
 import { applyRules, describeRules, loadRules } from './core/rules.js'
 import { resolveNextApp } from './core/workspace.js'
+import { packageVersion } from './core/checkCli.js'
 import { registerNextjsTools } from './stacks/nextjs.js'
 import { registerFileTools } from './scanners/files.js'
 import { registerImportTools } from './scanners/imports.js'
@@ -133,7 +134,7 @@ const INSTRUCTIONS = [
 
 const server = new McpServer({
   name: 'nextjs-lens',
-  version: '0.4.0',
+  version: packageVersion(),
 }, { instructions: INSTRUCTIONS })
 
 // Tools with a summarizer get a `detail` parameter: a compact summary by default, the complete result on request
