@@ -187,7 +187,7 @@ server.resource(
     contents: [{
       uri: uri.href,
       mimeType: 'text/markdown',
-      text: `# Codebase Lens Status\n\nProject: ${root}\n\n${detectionSummary}\n\nTools loaded: ${tools.length}\n\nRules: ${describeRules(loadedRules)}\n\n## Available Tools\n${tools.map(t => `- **${t.name}** — ${t.description.split('.')[0]}`).join('\n')}\n`,
+      text: `# nextjs-lens Status\n\nProject: ${root}\n\n${detectionSummary}\n\nTools loaded: ${tools.length}\n\nRules: ${describeRules(loadedRules)}\n\n## Available Tools\n${tools.map(t => `- **${t.name}** — ${t.description.split('.')[0]}`).join('\n')}\n`,
     }],
   }),
 )
