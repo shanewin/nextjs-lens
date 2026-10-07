@@ -8,16 +8,18 @@ Claude can read a `page.tsx` file on its own. What it can't easily do is hold th
 
 ## Why
 
-We tested the same security audit question on a 90-file Next.js app across different models and configurations:
+We asked Claude Code "Do a full security audit. What are all the security issues?" about a Next.js test app with 90 source files and 27 planted security issues:
 
-| Config | Correct findings | Hallucinations | Cost |
-|--------|-----------------|----------------|------|
-| Haiku alone | ~5 of 27 | 7 false positives | $0.19 |
-| **Haiku + nextjs-lens** | **~23 of 27** | **0** | **$0.10** |
-| Opus alone | ~20 of 27 | 2 false positives | $0.47 |
-| **Opus + nextjs-lens** | **~24 of 27** | **0** | **$0.65** |
+| Config | Issues found (of 27) | Wrong claims | Cost | Time |
+|--------|---------------------|--------------|------|------|
+| Haiku 4.5 alone | 12 | 5 | $0.11 | 60s |
+| **Haiku 4.5 + nextjs-lens** | **20** | **1.3** | **$0.05** | **27s** |
+| Opus 5.5 alone | 20 | 0.3 | $0.77 | 132s |
+| **Opus 5.5 + nextjs-lens** | **21** | **0.3** | **$0.37** | **60s** |
 
-Haiku with nextjs-lens outperformed Opus without it — at one-fifth the cost, in a quarter of the time, with zero hallucinations. Without tools, Haiku invented security issues that don't exist (fake CSRF problems, nonexistent password handling). With tools, it reported only what the code actually shows.
+Haiku with nextjs-lens found as many issues as Opus without it, at one-fifteenth the cost and in a fifth of the time. Opus with nextjs-lens found the most, at half the cost and time of Opus alone. Without tools, Haiku made about five wrong claims per audit, such as auth checks it said were bypassed (they fail closed) and CSRF holes that Next.js already blocks. With tools, that dropped to one or two.
+
+Averages of 3 runs per config, with nextjs-lens 0.4.0 (October 2026). The "+ nextjs-lens" runs were told to use the tools; models rarely reach for MCP tools on their own. Answers were graded blind against the app's answer key, with every claim checked against the source.
 
 ## How it works
 
