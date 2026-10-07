@@ -122,10 +122,19 @@ const detectionSummary = [`Next.js app: ${appRoot}`, resolution.note].filter(Boo
 // Create MCP server
 // ---------------------------------------------------------------------------
 
+// Shown to the model even when the tools themselves are deferred, so it knows which ones to load by name
+const INSTRUCTIONS = [
+  'nextjs-lens answers whole-app questions about this Next.js project from its parsed source. Prefer it over reading files one by one.',
+  'Security audit: run all of audit_route_auth, find_server_actions, map_client_boundaries (server code imported by client code), ' +
+    'analyze_middleware, audit_env_files, and audit_next_config.',
+  'Structure and rendering: get_route_tree, list_routes, analyze_data_fetching. Dead code: find_unused_exports.',
+  'Findings come from static analysis: read the cited file before reporting anything the finding does not state.',
+].join('\n')
+
 const server = new McpServer({
   name: 'nextjs-lens',
   version: '0.4.0',
-})
+}, { instructions: INSTRUCTIONS })
 
 // Tools with a summarizer get a `detail` parameter: a compact summary by default, the complete result on request
 const DETAIL_PARAM: PropertySchema = {

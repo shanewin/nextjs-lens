@@ -56,6 +56,17 @@ describe('server over MCP (monorepo root with .nextjs-lens.json)', () => {
     for (const tool of NEXTJS_TOOLS) assert.ok(names.includes(tool), `missing ${tool}`)
   })
 
+  it('sends instructions that name only real tools, including every security audit tool', async () => {
+    const instructions = client.getInstructions()
+    const { tools } = await client.listTools()
+    const names = new Set(tools.map(t => t.name))
+    const mentioned = instructions.match(/\b[a-z]+(?:_[a-z]+)+\b/g)
+    for (const name of mentioned) assert.ok(names.has(name), `instructions mention unknown tool ${name}`)
+    for (const name of ['audit_route_auth', 'find_server_actions', 'map_client_boundaries', 'analyze_middleware', 'audit_env_files', 'audit_next_config']) {
+      assert.ok(mentioned.includes(name), `instructions omit ${name}`)
+    }
+  })
+
   it('reports the chosen app and loaded rules in the status resource', async () => {
     const status = await client.readResource({ uri: 'lens://status' })
     const text = status.contents[0].text

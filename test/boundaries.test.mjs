@@ -16,6 +16,14 @@ describe('map_client_boundaries', () => {
     ])
   })
 
+  it('says a module marked server-only fails the build instead of shipping', async () => {
+    const { findings } = await runTool(APP, 'map_client_boundaries')
+    const leak = findings.find(f => f.chain?.join(' → ') === 'src/components/ClientCounter.tsx → src/lib/db.ts')
+    assert.equal(leak.effect, 'build-fails')
+    assert.match(leak.detail, /src\/lib\/db\.ts \(it imports "server-only"\).*`next build` fails and it never reaches the browser/)
+    assert.doesNotMatch(leak.detail, /reaches the client bundle/)
+  })
+
   it('follows only the barrel re-exports that were imported', async () => {
     const result = await runTool(APP, 'map_client_boundaries')
     // (marketing)/layout.tsx imports { Button } from a barrel that also re-exports a client widget using db
@@ -51,5 +59,6 @@ describe('map_client_boundaries', () => {
     const { findings } = await runTool(SITE, 'map_client_boundaries')
     assert.deepEqual(leakChains(findings), ['components/Counter.tsx → ../../packages/db/index.ts'])
     assert.match(findings[0].detail, /"pg"/)
+    assert.equal(findings[0].effect, 'ships-to-browser')
   })
 })

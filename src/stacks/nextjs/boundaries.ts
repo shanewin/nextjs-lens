@@ -41,6 +41,26 @@ interface FileFacts {
   privateEnvVars: string[]      // process.env.X without NEXT_PUBLIC_
 }
 
+/**
+ * What happens when client code imports a server-only module. The 'server-only' marker, next/headers, and Node builtins
+ * without a browser fallback make `next build` fail, so nothing ships; other server packages get bundled for the browser.
+ */
+function describeLeak(file: string, spec: string, chain: string[]): { detail: string; effect: 'build-fails' | 'ships-to-browser' } {
+  const path = chain.join(' → ')
+  const fix = 'Keep it on the server: load the data in a Server Component or server action and pass the result down.'
+  const bare = spec.replace(/^node:/, '')
+  if (bare === 'server-only') {
+    return { effect: 'build-fails', detail: `Server-only module ${file} (it imports "server-only") is imported by client code, so \`next build\` fails and it never reaches the browser: ${path}. ${fix}` }
+  }
+  if (bare === 'next/headers' || bare.startsWith('next/headers/')) {
+    return { effect: 'build-fails', detail: `Server-only module "next/headers" (used by ${file}) is imported by client code, so \`next build\` fails: ${path}. ${fix}` }
+  }
+  if (SERVER_ONLY_BUILTINS.has(bare)) {
+    return { effect: 'build-fails', detail: `Server-only module "${spec}" (Node builtin with no browser version, used by ${file}) is imported by client code, so the client build breaks: ${path}. ${fix}` }
+  }
+  return { effect: 'ships-to-browser', detail: `Server-only module "${spec}" (used by ${file}) is pulled into the client bundle: ${path}. Depending on the package, the build fails or server code ships to the browser. ${fix}` }
+}
+
 function isBareOrBuiltin(spec: string): string | null {
   const s = spec.replace(/^node:/, '')
   if (SERVER_ONLY_BUILTINS.has(s)) return spec
@@ -327,7 +347,9 @@ export function registerBoundaryTools(tools: ToolCollector, root: string, appDir
   tools.register({
     name: 'map_client_boundaries',
     description:
-      'Map the Server/Client Component boundary across the App Router. Walks the real import graph from every page/layout/template ' +
+      'Security and build check for the Server/Client Component boundary: finds database clients, secret SDKs, and server-only modules ' +
+      'imported by client code, and says whether each one breaks the build or ships to the browser. Use it in any security audit. ' +
+      'Maps the boundary across the App Router by walking the real import graph from every page/layout/template ' +
       '(resolving tsconfig path aliases), finds each place a Server Component imports a \'use client\' module, and computes which files ' +
       'end up in the client bundle, which render only on the server, and which run in both. Flags server-only code (server-only, node builtins, ' +
       'DB/secret SDKs, next/headers) pulled into the client bundle with the full import chain, private process.env reads in client-only code, ' +
@@ -360,7 +382,7 @@ export function registerBoundaryTools(tools: ToolCollector, root: string, appDir
       const clientFiles: string[] = []
       const serverOnly: string[] = []
       const shared: string[] = []
-      const findings: (Finding & { chain?: string[] })[] = []
+      const findings: (Finding & { chain?: string[]; effect?: 'build-fails' | 'ships-to-browser' })[] = []
 
       for (const [file, set] of a.envs) {
         const f = a.facts.get(file)!
@@ -376,7 +398,7 @@ export function registerBoundaryTools(tools: ToolCollector, root: string, appDir
               // One finding per client chain: each 'use client' entry point needs its own fix
               const { chains, truncated } = clientChainsTo(root, a, file)
               for (const chain of chains) {
-                findings.push({ severity: 'high', detail: `Server-only module "${imp.specifier}" reaches the client bundle: ${chain.join(' → ')}`, file: `${rel(file)}:${imp.line}`, chain })
+                findings.push({ severity: 'high', ...describeLeak(rel(file), imp.specifier, chain), file: `${rel(file)}:${imp.line}`, chain })
               }
               if (truncated) {
                 findings.push({ severity: 'info', detail: `More client import chains reach ${rel(file)} than the ${chains.length} listed`, file: rel(file) })
