@@ -1,6 +1,6 @@
 {
   "name": "nextjs-lens",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Deep Next.js analysis for Claude Code (MCP server) and import policy checks for CI: route trees, server/client boundaries, auth coverage, dead exports, and enforceable client-bundle rules.",
   "type": "module",
   "main": "dist/server.js",
