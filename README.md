@@ -1,5 +1,7 @@
 # nextjs-lens
 
+[![npm](https://img.shields.io/npm/v/nextjs-lens)](https://www.npmjs.com/package/nextjs-lens)
+
 An MCP server that gives Claude Code (or any MCP client) deep insight into Next.js projects.
 
 Claude can read a `page.tsx` file on its own. What it can't easily do is hold the whole app in its head: which layout wraps which page, where `'use client'` pulls a subtree into the browser bundle, which route handlers skip auth, or which exports nothing imports. nextjs-lens parses your project with the TypeScript compiler API and answers those questions directly.
@@ -32,7 +34,13 @@ nextjs-lens (MCP server over stdio)
 
 ### 1. Add to your project
 
-Requires Node.js 20.11 or later. Create `.mcp.json` in your project root:
+Requires Node.js 20.11 or later. From your project root, add it to Claude Code with one command:
+
+```bash
+claude mcp add nextjs-lens --scope project -e PROJECT_PATH="$PWD" -- npx -y nextjs-lens
+```
+
+Or create `.mcp.json` in your project root yourself:
 
 ```json
 {
